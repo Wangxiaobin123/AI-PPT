@@ -32,7 +32,7 @@ AI-PPT/
 │   ├── core/                 # Module A: Intent Engine
 │   │   ├── intent/           # Classifier, parameter extractor, conversation
 │   │   ├── task/             # Task models, decomposer, scheduler
-│   │   └── llm/              # LLM client (Anthropic + OpenAI providers)
+│   │   └── llm/              # LLM client (multi-provider: Anthropic, OpenAI, DeepSeek, Ollama, etc.)
 │   │
 │   ├── skills/               # Module B: Skills Registry
 │   │   ├── base.py           # BaseSkill ABC
@@ -113,6 +113,30 @@ AI-PPT/
 | GET | `/api/v1/skills` | List available skills |
 | GET | `/api/v1/files/{id}` | Download generated file |
 
+### LLM Provider Support
+
+The system supports multiple LLM providers through a pluggable architecture (`src/core/llm/`):
+
+| Provider | Config Value | Default Model | Notes |
+|----------|-------------|---------------|-------|
+| Anthropic | `anthropic` | `claude-sonnet-4-20250514` | Default provider |
+| OpenAI | `openai` | `gpt-4o` | |
+| DeepSeek | `deepseek` | `deepseek-chat` | OpenAI-compatible API |
+| Ollama | `ollama` | `llama3` | Local, no API key needed |
+| Together AI | `together` | varies | OpenAI-compatible |
+| Groq | `groq` | `llama3-70b-8192` | OpenAI-compatible |
+| Moonshot | `moonshot` | `moonshot-v1-8k` | OpenAI-compatible |
+| Zhipu/GLM | `zhipu` | `glm-4` | OpenAI-compatible |
+| SiliconFlow | `siliconflow` | varies | OpenAI-compatible |
+| Custom | `openai_compatible` | varies | Requires `LLM_BASE_URL` |
+
+Configure via `.env`:
+```bash
+LLM_PROVIDER=deepseek
+DEEPSEEK_API_KEY=sk-xxx
+LLM_MODEL=deepseek-chat
+```
+
 ## Git Workflow
 
 - `master` — stable branch
@@ -124,6 +148,6 @@ AI-PPT/
 1. **Read before editing** — Always read files before proposing changes.
 2. **Minimal changes** — Only make changes that are directly requested or clearly necessary.
 3. **No secrets in commits** — Never commit `.env` files, API keys, or credentials.
-4. **Run tests** — `make test` before committing. All 29 tests must pass.
+4. **Run tests** — `make test` before committing. All tests must pass.
 5. **Update this file** — When adding new modules or changing architecture, update this CLAUDE.md.
 6. **Use the skills** — Claude Code skills are in `.claude/skills/`. Use `/pptx`, `/docx`, etc. for document generation.
