@@ -23,8 +23,8 @@ env/
 # Environment
 .env
 
-# Output files
-output/
+# Output files (generated documents)
+/output/
 *.pptx
 *.docx
 *.xlsx
