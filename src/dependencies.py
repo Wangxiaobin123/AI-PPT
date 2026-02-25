@@ -32,14 +32,51 @@ def get_skills_registry(request: Request) -> SkillRegistry:
 # LLM client (optional -- returns None when no API key is configured)
 # ---------------------------------------------------------------------------
 
+def _resolve_api_key() -> str:
+    """Pick the API key for the configured provider.
+
+    Resolution order:
+      1. Provider-specific key (``ANTHROPIC_API_KEY``, ``OPENAI_API_KEY``,
+         ``DEEPSEEK_API_KEY``)
+      2. Generic ``LLM_API_KEY``
+      3. Fall back to any non-empty provider-specific key
+    """
+    provider = settings.llm_provider
+    provider_keys: dict[str, str] = {
+        "anthropic": settings.anthropic_api_key,
+        "openai": settings.openai_api_key,
+        "deepseek": settings.deepseek_api_key,
+    }
+
+    # 1. Exact match for the configured provider.
+    if provider in provider_keys and provider_keys[provider]:
+        return provider_keys[provider]
+
+    # 2. Generic key.
+    if settings.llm_api_key:
+        return settings.llm_api_key
+
+    # 3. Any non-empty key (for services like Ollama that accept anything).
+    for key in provider_keys.values():
+        if key:
+            return key
+
+    return ""
+
+
 def get_llm_client():
     """Build an LLM client if API keys are available.
 
-    Returns ``None`` when neither ``anthropic_api_key`` nor
-    ``openai_api_key`` are set, allowing the system to degrade
-    gracefully (e.g. rule-based intent parsing only).
+    Returns ``None`` when no usable API key is found **and** the provider
+    requires one, allowing the system to degrade gracefully (e.g.
+    rule-based intent parsing only).
     """
-    if not settings.anthropic_api_key and not settings.openai_api_key:
+    api_key = _resolve_api_key()
+    provider = settings.llm_provider
+
+    # Ollama and some local providers don't require a key.
+    local_providers = {"ollama"}
+    if not api_key and provider not in local_providers:
         return None
 
     # Lazy import -- the LLM module may not be fully built yet.
@@ -49,8 +86,8 @@ def get_llm_client():
         logger.warning("llm_client_unavailable", reason="LLMClient not importable")
         return None
 
-    api_key = settings.anthropic_api_key or settings.openai_api_key
-    return LLMClient(settings.llm_provider, api_key, settings.llm_model)
+    base_url = settings.llm_base_url or None
+    return LLMClient(provider, api_key, settings.llm_model, base_url=base_url)
 
 
 # ---------------------------------------------------------------------------

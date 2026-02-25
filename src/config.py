@@ -6,7 +6,10 @@ class Settings(BaseSettings):
     llm_provider: str = "anthropic"
     anthropic_api_key: str = ""
     openai_api_key: str = ""
+    deepseek_api_key: str = ""
+    llm_api_key: str = ""  # Generic key — used when provider-specific key is empty
     llm_model: str = "claude-sonnet-4-20250514"
+    llm_base_url: str = ""  # Custom base URL for openai_compatible provider
 
     # Server
     host: str = "0.0.0.0"
